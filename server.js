@@ -85,53 +85,19 @@ var server = http.createServer(function requestHandler (req, res) {
         }
       break;
 
-
-      // var result = {};
-      // req.on('data', function (data) {
-      //   var body = parseBody(data);
-      //   result.name = body.name;
-
-
-        //
-        //   return true;// create new webpage
-        // });
-      // req.on('end', function () {
-      //   fs.readFile('datastore.json', function (err, data) {
-      //     data = data.toString();
-      //     if (err) {
-      //       res.statusCode = 500;
-      //       res.statusMessage = "Something went wrong...";
-      //       return res.end();
-      //     }
-
-      //     if (!data) {
-      //       data = [];
-      //     } else {
-      //       data = JSON.parse(data);
-      //     }
-
-      //     data.push(result);
-      //     var stringifiedData = JSON.stringify(data);
-      //     fs.writeFile('datastore.json', stringifiedData, function (err) {
-      //       if (err) {
-      //         res.statusCode = 500;
-      //         res.statusMessage = "Something went wrong...";
-      //         return res.end();
-      //       }
-      //     });
-      //     res.end(stringifiedData);
-      //   });
-      // });
-      // break;
-
       /********************** GET Request *************************/
       case 'GET':
         // If empty request, send to default page (index.html).
+        console.log('GET request triggered.');
         if (req.url === '/') {
-          fs.readFile('/index.html', function (err, data) {
-            res.statusCode = 500;
-            res.statusMessage = "Could not POST...";
-            return res.end();
+          console.log('index.html loading...');
+          fs.readFile('public/index.html', function (err, data) {
+            if (err) {
+              res.statusCode = 500;
+              res.statusMessage = "Could not load index...";
+            }
+            // Return the index.html data.
+            return res.end(data);
           });
         // If specific request, get that page. If no page, return 404 error.
         } else {
@@ -141,7 +107,7 @@ var server = http.createServer(function requestHandler (req, res) {
               fs.readFile('public/404.html', function (err, rawbuffer) {
                 if (err) {
                   res.statusCode = 500;
-                  res.statusMessage = "Could not POST...";
+                  res.statusMessage = "Could not find 404...";
                   return res.end();
                 }
                 res.end(rawbuffer);
@@ -150,8 +116,8 @@ var server = http.createServer(function requestHandler (req, res) {
               res.statusMessage = "Could not GET " + req.url;
               return res.end();
             }
-
-            return res.end(data.toString());
+            // Return the data, i.e. the requested url.
+            return res.end(data);
           });
         }
       break;
