@@ -28,7 +28,7 @@ fs.readdir('./public', function (err, files) {
   // Isolate 'element' files based upon '.html' suffix.
   elements = files
     .filter(function(file) {
-      return (file.indexOf('.html') > -1 && file !== 'index.html');
+      return (file.indexOf('.html') > -1 && file !== 'index.html' && file !== '404.html');
     })
     .map(function(fileName) {
       return fileName.substring(0, fileName.indexOf('.html'));
@@ -45,6 +45,7 @@ var server = http.createServer(function requestHandler (req, res) {
   // What to do with the data sent with server request.
   req.on('data', function (data) {
     dataBuffer += data;
+    console.log('Databuffer: ', dataBuffer);
   });
 
   // What to do when the server request has ended.
@@ -58,29 +59,39 @@ var server = http.createServer(function requestHandler (req, res) {
       /********************** POST Request *************************/
       // Create new .html based upon posted elementName
 
-      // Look up writeIndex() and dataBuild()
-
       case 'POST':
+        console.log('POST request triggered.');
+
+        // Does JSON.stringify do the same thing as qs.parse?
         var stringifiedData = JSON.stringify(data);
+
         if (req.url === '/elements') {
-          fs.writeFile('public' + data.elementName + '.html', pageBuild(data), function (err) {
+          console.log('POST has made contact...');
+          fs.writeFile('public/' + data.elementName + '.html', pageBuild(data), function (err) {
+            console.log('Time to write the file...');
+
+            // Error condition
             if (err) {
               res.statusCode = 500;
               res.statusMessage = "Could not POST...";
               return res.end();
             }
+
+            // Followed directions, but what does this do?
             res.writeHead(200, {
-              'Content-Type': 'application/json',
+              'Content-Type': 'application/json'
+            });
+            res.end({
               'success': true
             });
-            res.end();
             console.log('Data has been stored');
 
             // If the Post Req elementName is not in the directory of elements, add it to the directory
             if(elements.indexOf(data.elementName) === -1) {
               elements.push(data.elementName);
+              console.log(elements);
+              updateIndex(elements); // a function to update 'index.html'
             }
-            console.log(elements);
           });
         }
       break;
@@ -92,19 +103,26 @@ var server = http.createServer(function requestHandler (req, res) {
         if (req.url === '/') {
           console.log('index.html loading...');
           fs.readFile('public/index.html', function (err, data) {
+
+            // Error condition
             if (err) {
               res.statusCode = 500;
               res.statusMessage = "Could not load index...";
             }
+
             // Return the index.html data.
             return res.end(data);
           });
         // If specific request, get that page. If no page, return 404 error.
         } else {
           fs.readFile('public' + req.url, function (err, data) {
+
+            // Error condition
             if (err) {
               console.error(err);
               fs.readFile('public/404.html', function (err, rawbuffer) {
+
+                // Error condition to the error condition...
                 if (err) {
                   res.statusCode = 500;
                   res.statusMessage = "Could not find 404...";
@@ -133,6 +151,7 @@ server.listen(8080, function () {
 
 /******************* Miscellaneous Functions ***********************/
 
+// A function to build a new page based upon POST data.
 function pageBuild(data) {
   return '<html lang="en">' +
       '<head>' +
@@ -141,12 +160,21 @@ function pageBuild(data) {
         '<link rel="stylesheet" href="/css/styles.css">' +
       '</head>' +
       '<body>' +
-        '<ul>' +
-          '<li>Element Name: ' + data.elementName + '</li>' +
-          '<li>Element Symmbol: ' + data.elementSymbol + '</li>' +
-          '<li>Element Atomic Number: ' + data.elementAtomicNumber + '</li>' +
-          '<li>Element Description: ' + data.elementDescription + '</li>' +
-        '</ul>' +
+        '<h1>' + data.elementName + '</h1>' +
+        '<h2>' + data.elementSymbol + '</h2>' +
+        '<h3>' + data.elementAtomicNumber + '</h3>' +
+        '<p>' + data.elementDescription + '</p>' +
+        '<p><a href="/">back</a></p>' +
       '</body>' +
     '</html>';
+}
+
+// A function to update index.html to reflect newly added element page.
+// Question: how to talk specifically to index.html? '.load()'? '.get()'?
+function updateIndex(data) {
+  console.log('hello, new element friends: ', elements);
+  var $newElement = $('<li>' +
+    '<a href="/' + data.elementName + '.html>' + data.elementName + '</a>' +
+    '</li>');
+  $('ol').append($newElement);
 }
