@@ -66,7 +66,7 @@ var server = http.createServer(function requestHandler (req, res) {
         console.log(stringifiedData);
         // Does JSON.stringify do the same thing as qs.parse?
 
-        if (req.url === '/elements') {
+        if (req.url === '/elements' && elements.indexOf(data.elementName) === -1) {
           console.log('POST has made contact...');
           fs.writeFile('./public/' + data.elementName + '.html', pageBuild(data), function (err) {
             console.log('Time to write the file...');
@@ -95,6 +95,8 @@ var server = http.createServer(function requestHandler (req, res) {
             }
           });
           console.log('New elements array: ', elements);
+        } else {
+          console.log('That URL already exists');
         }
       break;
 
@@ -156,7 +158,7 @@ server.listen(8080, function () {
 
 // A function to build a new page based upon POST data.
 function pageBuild(data) {
-  // if (data.elementName) {}
+  if (data.elementName) {}
   return '<html lang="en">' +
       '<head>' +
         '<meta charset="UTF-8">' +
@@ -174,18 +176,22 @@ function pageBuild(data) {
 }
 
 // A function to update index.html to reflect newly added element page.
-// Question: how to talk specifically to index.html? '.load()'? '.get()'?
 function updateIndex(element) {
   // fs.readFile gets a string
-  var li = "<li><a href='/" +element+ ".html'>" +element+ "</a></li>";
-  var index = fs.readFile('index.html', 'utf8', function (err, data) {});
-  fs.writeFile('index.html', li, index.lastIndexOf('</li>')+5, 'utf8', function (err) {
-    if (err) {
-      res.statusCode = 500;
-      res.statusMessage = "Could not POST...";
-      return res.end();
-    }
+  var li = "<li><a href='/" +element+ ".html'>" +element+ "</a></li></ol></body></html>";
+  fs.readFile('./public/index.html', 'utf8', function (err, data) {
+    if (err)
+      console.log(err);
+    var fd = fs.openSync('./public/index.html', 'r+');
+    fs.write(fd, li, data.lastIndexOf('</li>')+5, 'utf8', function (err) {
+      if (err) {
+        res.statusCode = 500;
+        res.statusMessage = "Could not POST...";
+        return res.end();
+      }
+    });
   });
+
 }
 
 // read in the index file, make sure it doesn't already have the element, write back the index file with the new element added
