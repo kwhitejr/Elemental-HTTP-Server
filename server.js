@@ -45,7 +45,6 @@ var server = http.createServer(function requestHandler (req, res) {
   // What to do with the data sent with server request.
   req.on('data', function (data) {
     dataBuffer += data;
-    console.log('Databuffer: ', dataBuffer);
   });
 
   // What to do when the server request has ended.
@@ -60,16 +59,10 @@ var server = http.createServer(function requestHandler (req, res) {
       // Create new .html based upon posted elementName
 
       case 'POST':
-        var stringifiedData = JSON.stringify(data);
-        console.log('POST request triggered.');
-        console.log(data);
-        console.log(stringifiedData);
-        // Does JSON.stringify do the same thing as qs.parse?
-
+        // Check if post is made to correct root and if that element already exists.
         if (req.url === '/elements' && elements.indexOf(data.elementName) === -1) {
-          console.log('POST has made contact...');
+          // Write to new html file based upon element name and 'pageBuild()' function
           fs.writeFile('./public/' + data.elementName + '.html', pageBuild(data), function (err) {
-            console.log('Time to write the file...');
 
             // Error condition
             if (err) {
@@ -91,7 +84,7 @@ var server = http.createServer(function requestHandler (req, res) {
             if(elements.indexOf(data.elementName) === -1) {
               elements.push(data.elementName);
               console.log(elements);
-              updateIndex(data.elementName); // a function to update 'index.html'
+              updateIndex(data.elementName);
             }
           });
           console.log('New elements array: ', elements);
@@ -103,9 +96,7 @@ var server = http.createServer(function requestHandler (req, res) {
       /********************** GET Request *************************/
       case 'GET':
         // If empty request, send to default page (index.html).
-        console.log('GET request triggered.');
         if (req.url === '/') {
-          console.log('index.html loading...');
           fs.readFile('public/index.html', 'utf8', function (err, data) {
 
             // Error condition
@@ -123,21 +114,11 @@ var server = http.createServer(function requestHandler (req, res) {
 
             // Error condition
             if (err) {
-              console.log('Requested page does not exist.');
               res.statusCode = 404;
               res.statusMessage = "Could not GET " + req.url;
               return fs.readFile('./public/404.html', 'utf8', function (err, rawbuffer) {
-                console.log('Why you no read?');
-                console.log(rawbuffer);
-                // // Error condition to the error condition...
-                // if (err) {
-                //   res.statusCode = 500;
-                //   res.statusMessage = "Could not find 404...";
-                //   return res.end();
-                // }
                 return res.end(rawbuffer);
               });
-              // return res.end(data);
             }
             // (else) Return the data, i.e. the requested url.
             return res.end(data);
@@ -158,7 +139,6 @@ server.listen(8080, function () {
 
 // A function to build a new page based upon POST data.
 function pageBuild(data) {
-  if (data.elementName) {}
   return '<html lang="en">' +
       '<head>' +
         '<meta charset="UTF-8">' +
@@ -177,12 +157,15 @@ function pageBuild(data) {
 
 // A function to update index.html to reflect newly added element page.
 function updateIndex(element) {
-  // fs.readFile gets a string
+  // The new end to index.html
   var li = "<li><a href='/" +element+ ".html'>" +element+ "</a></li></ol></body></html>";
+  // fs.readFile gets index.html in string form
   fs.readFile('./public/index.html', 'utf8', function (err, data) {
     if (err)
       console.log(err);
+    // fd (File Descriptor) gets the file to be written to for 'fs.write'.
     var fd = fs.openSync('./public/index.html', 'r+');
+    // Overwrites the 'fd' with 'li' beginning at position.
     fs.write(fd, li, data.lastIndexOf('</li>')+5, 'utf8', function (err) {
       if (err) {
         res.statusCode = 500;
@@ -191,7 +174,5 @@ function updateIndex(element) {
       }
     });
   });
-
 }
 
-// read in the index file, make sure it doesn't already have the element, write back the index file with the new element added
