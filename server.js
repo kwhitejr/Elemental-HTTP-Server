@@ -42,7 +42,7 @@ var server = http.createServer(function requestHandler (req, res) {
   // Need empty variable to store req data in.
   var dataBuffer = '';
 
-  // What to do with the data sent with server request.
+  // What to do with the data sent with server request. Data is assigned to variable that is global to server request-handler.
   req.on('data', function (data) {
     dataBuffer += data;
   });
@@ -125,6 +125,13 @@ var server = http.createServer(function requestHandler (req, res) {
           });
         }
       break;
+
+      /********************** PUT Request *************************/
+      case 'GET':
+
+
+
+      break;
     }
   });
 });
@@ -136,6 +143,22 @@ server.listen(8080, function () {
 });
 
 /******************* Miscellaneous Functions ***********************/
+
+// Simplify all the fs.readFile functions.
+function sendFile(data, url) {
+  fs.readFile(url, 'utf8', function (err, data) {
+
+    // Error condition
+    if (err) {
+      res.statusCode = 500;
+      res.statusMessage = "Could not load index...";
+    }
+
+    // Return the index.html data.
+    return res.end(data);
+  });
+}
+
 
 // A function to build a new page based upon POST data.
 function pageBuild(data) {
